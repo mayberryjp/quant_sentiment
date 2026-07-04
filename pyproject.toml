@@ -1,0 +1,37 @@
+[project]
+name = "quant-sentiment"
+version = "0.1.0"
+description = "Market sentiment aggregation API for the quant/algo trading platform"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "bottle>=0.13",
+    "waitress>=3.0",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "SQLAlchemy>=2.0.30",
+    "alembic>=1.13",
+]
+
+[project.optional-dependencies]
+# Postgres driver – required in production / docker, not needed for the
+# SQLite-backed test suite.
+postgres = [
+    "psycopg[binary]>=3.2",
+]
+dev = [
+    "pytest>=8.2",
+    "webtest>=3.0",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+addopts = "-v"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
