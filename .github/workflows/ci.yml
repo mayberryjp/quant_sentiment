@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  tests:
+    name: Unit tests (SQLite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: pytest -v
+
+  migration:
+    name: Migration smoke (PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sentiment
+          POSTGRES_PASSWORD: sentiment
+          POSTGRES_DB: sentiment
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sentiment"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://sentiment:sentiment@localhost:5432/sentiment
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev,postgres]"
+      - name: Apply migrations
+        run: alembic upgrade head
+      - name: Verify schema exists
+        run: |
+          python - <<'PY'
+          import os
+          from sqlalchemy import create_engine, text
+          engine = create_engine(os.environ["DATABASE_URL"])
+          with engine.connect() as conn:
+              count = conn.execute(
+                  text("select count(*) from sentiment.sentiment_observations")
+              ).scalar_one()
+              print("sentiment_observations rows:", count)
+          PY
