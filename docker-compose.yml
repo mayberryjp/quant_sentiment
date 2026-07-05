@@ -3,7 +3,7 @@ services:
     image: mayberry4477/quant_sentiment:latest
     restart: "unless-stopped"
     environment:
-      DATABASE_URL: postgresql+psycopg://quant:quant@quant_postgres.quant.mayberry.farm:5432/quant
+      DATABASE_URL: 
       API_LISTEN_ADDRESS: 0.0.0.0
       API_PORT: "8017"
     ports:
