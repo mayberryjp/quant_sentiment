@@ -20,6 +20,20 @@ class TestHealth:
         r = app_client.get("/sentiment/health")
         assert r.status_int == 200
         assert r.json["status"] == "ok"
+        assert r.headers["Access-Control-Allow-Origin"] == "*"
+
+    def test_cors_preflight_ok(self, app_client):
+        r = app_client.options(
+            "/sentiment",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type",
+            },
+        )
+        assert r.status_int == 204
+        assert r.headers["Access-Control-Allow-Origin"] == "*"
+        assert "POST" in r.headers["Access-Control-Allow-Methods"]
 
     def test_ready_ok(self, app_client):
         r = app_client.get("/sentiment/ready")

@@ -29,6 +29,29 @@ def create_app() -> Bottle:
     app.merge(sentiment.sub)
     app.merge(aggregate.sub)
 
+    @app.hook("after_request")
+    def _add_cors_headers():
+        response.set_header("Access-Control-Allow-Origin", "*")
+        response.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+        response.set_header("Access-Control-Allow-Headers", "*")
+
+    def _cors_preflight(**_kwargs):
+        response.status = 204
+        return ""
+
+    for _path in (
+        "/sentiment",
+        "/sentiment/health",
+        "/sentiment/ready",
+        "/sentiment/stats",
+        "/sentiment/recent",
+        "/sentiment/by-subject/<subject>",
+        f"/sentiment/<sentiment_id:re:{sentiment.UUID_RE}>",
+        "/sentiment/aggregate",
+        "/sentiment/aggregate/timeseries",
+    ):
+        app.route(_path, method="OPTIONS")(_cors_preflight)
+
     def _json_error(error):
         response.content_type = "application/json"
         return json.dumps({"detail": _DEFAULT_ERRORS.get(error.status_code, "error")})
