@@ -7,7 +7,6 @@ then persists it idempotently.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from uuid import uuid4
 
 from app.models.domain import SentimentObservation
@@ -15,6 +14,7 @@ from app.models.requests import SentimentSubmission
 from app.repository.postgres import SentimentRepository
 from app.services.labels import derive_label
 from app.services.subject_resolver import SubjectResolver
+from app.timeutil import now_local
 
 
 def ingest_observation(
@@ -24,7 +24,7 @@ def ingest_observation(
 
     Returns ``(record, is_duplicate)``.
     """
-    now = datetime.now(timezone.utc)
+    now = now_local()
     observation = SentimentObservation(
         sentiment_id=uuid4(),
         source=submission.source,

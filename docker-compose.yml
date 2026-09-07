@@ -2,6 +2,7 @@ services:
   api:
     build: .
     environment:
+      TZ: America/New_York
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://sentiment:sentiment@host.docker.internal:5432/sentiment}
       API_LISTEN_ADDRESS: 0.0.0.0
       API_PORT: "8017"

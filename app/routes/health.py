@@ -5,7 +5,7 @@ from __future__ import annotations
 from bottle import Bottle, response
 
 from app.dependencies import get_repo
-from app.timeutil import to_utc
+from app.timeutil import to_local
 
 sub = Bottle()
 
@@ -32,7 +32,7 @@ def ready():
 def stats():
     """Operational counters computed from the immutable observation store."""
     data = get_repo().stats()
-    last_received = to_utc(data["last_received_at"])
+    last_received = to_local(data["last_received_at"])
     return {
         "total_observations": data["total_observations"],
         "distinct_subjects": data["distinct_subjects"],

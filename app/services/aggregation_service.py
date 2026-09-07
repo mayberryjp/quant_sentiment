@@ -8,26 +8,16 @@ aggregate; time-series bucketing is done in Python for backend portability.
 from __future__ import annotations
 
 import math
-from datetime import datetime, timezone
 
 from app.config import settings
 from app.repository.postgres import SentimentRepository
 from app.services.labels import derive_label
 from app.services.subject_resolver import canonicalize_subject
 from app.services.windows import parse_duration
+from app.timeutil import now_local, to_local
 
 _MAX_BUCKETS = 1000
 _VALID_TIME_BASIS = {"observed_at", "received_at"}
-
-
-def _to_utc(value) -> datetime | None:
-    if value is None:
-        return None
-    if isinstance(value, str):
-        value = datetime.fromisoformat(value)
-    if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc)
 
 
 def _weight(confidence, source_weight) -> float:
@@ -64,7 +54,7 @@ def aggregate(
     time_basis: str = "observed_at",
 ) -> dict:
     window, wdelta = _validate_common(window, time_basis)
-    now = datetime.now(timezone.utc)
+    now = now_local()
     since = now - wdelta
     canonical = canonicalize_subject(_subject_type_enum(subject_type), subject)
 
@@ -100,7 +90,7 @@ def aggregate(
         "net_label": _net_label(weighted_score, raw["mean_score"]),
         "sources": raw["sources"],
         "latest_observed_at": (
-            dt.isoformat() if (dt := _to_utc(raw["latest"])) else None
+            dt.isoformat() if (dt := to_local(raw["latest"])) else None
         ),
     }
 
@@ -124,7 +114,7 @@ def timeseries(
             f"too many buckets ({n_buckets}); widen the bucket or narrow the window"
         )
 
-    now = datetime.now(timezone.utc)
+    now = now_local()
     since = now - wdelta
     canonical = canonicalize_subject(_subject_type_enum(subject_type), subject)
 
@@ -143,7 +133,7 @@ def timeseries(
         for _ in range(n_buckets)
     ]
     for row in rows:
-        t = _to_utc(row["t"])
+        t = to_local(row["t"])
         if t is None:
             continue
         index = int((t - since) / bdelta)

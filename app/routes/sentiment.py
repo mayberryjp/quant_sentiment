@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
 
 from bottle import Bottle, HTTPError, HTTPResponse, request, response
 from pydantic import ValidationError
@@ -17,6 +16,7 @@ from app.models.responses import (
     SentimentListResponse,
 )
 from app.services.sentiment_service import ingest_observation
+from app.timeutil import to_local
 
 sub = Bottle()
 
@@ -27,13 +27,6 @@ UUID_RE = (
 
 def _detail(obs) -> SentimentDetailResponse:
     return SentimentDetailResponse(**obs.model_dump(mode="json"))
-
-
-def _parse_utc(value: str) -> datetime:
-    dt = datetime.fromisoformat(value)
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
 
 
 def _validation_error(exc: ValidationError) -> HTTPResponse:
@@ -75,8 +68,8 @@ def submit_sentiment():
 def recent_sentiment():
     params = request.params
     try:
-        since = _parse_utc(params.get("since")) if params.get("since") else None
-        until = _parse_utc(params.get("until")) if params.get("until") else None
+        since = to_local(params.get("since")) if params.get("since") else None
+        until = to_local(params.get("until")) if params.get("until") else None
     except ValueError:
         raise HTTPResponse(
             status=422,

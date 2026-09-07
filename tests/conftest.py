@@ -7,7 +7,6 @@ repository's SQLAlchemy Core statements run unchanged against both backends.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -20,11 +19,12 @@ from app.models.domain import SentimentLabel, SentimentObservation, SubjectType
 from app.repository.postgres import SentimentRepository
 from app.repository.schema import metadata
 from app.services.subject_resolver import SubjectResolver
+from app.timeutil import now_local
 
 
 def make_observation(**overrides) -> SentimentObservation:
     """Build a valid :class:`SentimentObservation` for tests."""
-    now = datetime.now(timezone.utc)
+    now = now_local()
     data = dict(
         sentiment_id=uuid4(),
         source="news-nlp-v1",

@@ -6,6 +6,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from app.models.domain import SentimentLabel, SentimentObservation, SubjectType
+from app.timeutil import local_tz
 
 
 class TestDomainModel:
@@ -17,10 +18,11 @@ class TestDomainModel:
         assert restored.subject_type is SubjectType.ticker
         assert restored.sentiment_label is SentimentLabel.bullish
 
-    def test_naive_datetime_coerced_to_utc(self, make_obs):
-        obs = make_obs(observed_at=datetime(2026, 1, 1, 12, 0, 0))
+    def test_naive_datetime_localized(self, make_obs):
+        naive = datetime(2026, 1, 1, 12, 0, 0)
+        obs = make_obs(observed_at=naive)
         assert obs.observed_at.tzinfo is not None
-        assert obs.observed_at.utcoffset().total_seconds() == 0
+        assert obs.observed_at.utcoffset() == naive.replace(tzinfo=local_tz()).utcoffset()
 
 
 class TestRepository:

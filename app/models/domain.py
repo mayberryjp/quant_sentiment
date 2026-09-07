@@ -1,19 +1,22 @@
 """Domain models for the sentiment aggregator.
 
 All models use Pydantic v2 and mirror the columns of
-``sentiment.sentiment_observations``. Timestamps are always normalized to
-timezone-aware UTC so behaviour is identical across PostgreSQL (TIMESTAMPTZ) and
-the SQLite test backend (which stores naive datetimes).
+``sentiment.sentiment_observations``. Timestamps are always normalized to the
+container's local timezone (e.g. America/New_York) so behaviour is identical
+across PostgreSQL (TIMESTAMPTZ) and the SQLite test backend (which stores naive
+datetimes).
 """
 
 from __future__ import annotations
 
 import enum
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
+
+from app.timeutil import local_tz
 
 
 class SubjectType(str, enum.Enum):
@@ -54,7 +57,7 @@ class SentimentObservation(BaseModel):
 
     @field_validator("observed_at", "received_at", mode="after")
     @classmethod
-    def _ensure_utc(cls, value: datetime) -> datetime:
+    def _ensure_local(cls, value: datetime) -> datetime:
         if value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
-        return value.astimezone(timezone.utc)
+            return value.replace(tzinfo=local_tz())
+        return value.astimezone(local_tz())
