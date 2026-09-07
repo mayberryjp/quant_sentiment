@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 
+from psycopg import sql
 from sqlalchemy import Engine, create_engine, event
 
 from app.timeutil import local_tz_name
@@ -39,8 +40,9 @@ def _bind_local_timezone(engine: Engine) -> None:
 
     @event.listens_for(engine, "connect")
     def _set_timezone(dbapi_conn, _record):  # noqa: ANN001
+        # SET TIME ZONE does not accept bind parameters; inline the value safely.
         with dbapi_conn.cursor() as cur:
-            cur.execute("SET TIME ZONE %s", (tz,))
+            cur.execute(sql.SQL("SET TIME ZONE {}").format(sql.Literal(tz)))
 
 
 
